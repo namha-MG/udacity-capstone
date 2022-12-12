@@ -72,6 +72,8 @@ It should return data that looks like this:
   ]
 }
 ```
+Choose sort key to sort data by key (CreatedAt, DueDate, Name)
+``
 
 * `CreateTodo` - should create a new TODO for a current user. A shape of data send by a client application to this function can be found in the `CreateTodoRequest.ts` file
 

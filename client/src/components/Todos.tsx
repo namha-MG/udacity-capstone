@@ -13,10 +13,11 @@ import {
   Image,
   Loader,
   Form,
-  Segment
+  Segment,
+  Dropdown
 } from 'semantic-ui-react'
 
-import { createTodo, deleteTodo, getTodos, patchTodo , getUploadUrl, uploadFile} from '../api/todos-api'
+import { createTodo, deleteTodo, getTodos, patchTodo, getUploadUrl, uploadFile } from '../api/todos-api'
 import Auth from '../auth/Auth'
 import { Todo } from '../types/Todo'
 
@@ -30,25 +31,49 @@ interface TodosState {
   newTodoName: string
   loadingTodos: boolean,
   expirationTime: number,
-  file:any
-}
+  file: any,
+  options: any,
+  selected: any,
+  indexName: string
 
+}
 export class Todos extends React.PureComponent<TodosProps, TodosState> {
   state: TodosState = {
     todos: [],
     newTodoName: '',
     loadingTodos: true,
     expirationTime: 1,
-    file:undefined
+    file: undefined,
+    options: [
+      { value: 'CreatedAt', text: 'Created At' },
+      { value: 'DueDate', text: 'Due Date' },
+      { value: 'Name', text: 'Name' },
+    ],
+    selected: 'CreatedAt',
+    indexName: 'CreatedAt'
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ newTodoName: event.target.value })
   }
+  handleIndexChange = async (event: React.ChangeEvent<HTMLInputElement>, data: any) => {
+    console.log(event)
+    this.setState({ indexName: data.value })
+    this.setState({ selected: data.value })
+    try {
+      const todos = await getTodos(this.props.auth.getIdToken(), data.value)
+      this.setState({
+        todos,
+        loadingTodos: false
+      })
+    } catch (e) {
+      alert(`Failed to fetch todos: ${(e as Error).message}`)
+    }
+  }
   handleExpireTimeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const re = /^[0-9\b]+$/;
     if ((event.target.value === '' || re.test(event.target.value)) && (!Number.isNaN(Number(event.target.value)) && 0 <= Number(event.target.value) && Number(event.target.value) < 31)) {
-      this.setState({ expirationTime: Number(event.target.value)})
+      this.setState({ expirationTime: Number(event.target.value) })
     }
   }
   handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,14 +90,14 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   onTodoCreate = async () => {
     try {
-      if(this.state.newTodoName.length === 0) {
+      if (this.state.newTodoName.length === 0) {
         alert('Todo creation failed. Please input name')
-      }else if(this.state.newTodoName.length < 3){
-        alert('Todo creation failed. Please input name length > 2') 
-      }else if(Number.isNaN(this.state.expirationTime)){
+      } else if (this.state.newTodoName.length < 3) {
+        alert('Todo creation failed. Please input name length > 2')
+      } else if (Number.isNaN(this.state.expirationTime)) {
         alert('Todo creation failed. Please input expiration time as a number')
       }
-      else{
+      else {
         const dueDate = this.calculateDueDate(this.state.expirationTime)
         const newTodo = await createTodo(this.props.auth.getIdToken(), {
           name: this.state.newTodoName,
@@ -82,14 +107,16 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
           const uploadUrl = await getUploadUrl(this.props.auth.getIdToken(), newTodo.todoId)
           await uploadFile(uploadUrl, this.state.file)
           newTodo.attachmentUrl = uploadUrl
+          const todos = await getTodos(this.props.auth.getIdToken(), this.state.indexName)
           this.setState({
-            todos: [...this.state.todos, newTodo],
+            todos: todos,
             newTodoName: '',
             expirationTime: 1,
           })
-        }else{
+        } else {
+          const todos = await getTodos(this.props.auth.getIdToken(), this.state.indexName)
           this.setState({
-            todos: [...this.state.todos, newTodo],
+            todos: todos,
             newTodoName: '',
             expirationTime: 1,
           })
@@ -132,7 +159,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   async componentDidMount() {
     try {
-      const todos = await getTodos(this.props.auth.getIdToken())
+      const todos = await getTodos(this.props.auth.getIdToken(), this.state.indexName)
       this.setState({
         todos,
         loadingTodos: false
@@ -148,7 +175,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         <Header as="h1">TODOs</Header>
 
         {this.renderCreateTodoInput()}
-
+        {this.renderDropDownIndex()}
         {this.renderTodos()}
       </div>
     )
@@ -161,21 +188,21 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
           <Form>
             <Form.Field required>
               <label>Name</label>
-              <Input placeholder='Name' onChange={this.handleNameChange} value={this.state.newTodoName}/>
+              <Input placeholder='Name' onChange={this.handleNameChange} value={this.state.newTodoName} />
             </Form.Field>
             <Form.Field>
               <label>Expire Time (0-30)</label>
               <Input label={{ basic: true, content: 'days' }} value={this.state.expirationTime} labelPosition='right' placeholder='Expire Time' onChange={this.handleExpireTimeChange} />
             </Form.Field>
             <Form.Field>
-            <label>File</label>
-            <input
-              type="file"
-              accept="image/*"
-              placeholder="Image to upload"
-              onChange={this.handleFileChange}
-            />
-          </Form.Field>
+              <label>File</label>
+              <input
+                type="file"
+                accept="image/*"
+                placeholder="Image to upload"
+                onChange={this.handleFileChange}
+              />
+            </Form.Field>
             <Button primary onClick={() => this.onTodoCreate()}><Icon name="save" />Add TODO Task</Button>
           </Form>
         </Segment>
@@ -185,7 +212,29 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
       </Grid.Row>
     )
   }
+  renderDropDownIndex() {
+    return (
+      <Grid padded>
+      <Grid.Row>
+        <Grid.Column width={8} verticalAlign="middle">
+          <label>Choose sort key</label>
+          </Grid.Column>
+          <Grid.Column width={8} floated="right">
+          <Dropdown
+          style={{border: 1, borderStyle:'solid',borderColor:'black',padding: 10}}
+           options={this.state.options}
+            onChange={this.handleIndexChange}
+            defaultValue={this.state.selected}>
+          </Dropdown>
+          </Grid.Column>
 
+        <Grid.Column width={16}>
+          <Divider />
+        </Grid.Column>
+      </Grid.Row>
+      </Grid>
+    )
+  }
   renderTodos() {
     if (this.state.loadingTodos) {
       return this.renderLoading()
@@ -207,6 +256,29 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   renderTodosList() {
     return (
       <Grid padded>
+                    <Grid.Row>
+              <Grid.Column width={1} verticalAlign="middle">
+              <label>IsDone</label>
+              </Grid.Column>
+              <Grid.Column width={8} verticalAlign="middle">
+              <label>Name</label>
+              </Grid.Column>
+              <Grid.Column width={2} floated="right">
+              <label>Due Date</label>
+              </Grid.Column>
+              <Grid.Column width={2} floated="right">
+              <label>Created Date</label>
+              </Grid.Column>
+              <Grid.Column width={1} floated="right">
+              <label>Edit</label>
+              </Grid.Column>
+              <Grid.Column width={1} floated="right">
+              <label>Delete</label>
+              </Grid.Column>
+              <Grid.Column width={16}>
+                <Divider />
+              </Grid.Column>
+            </Grid.Row>
         {this.state.todos.map((todo, pos) => {
           return (
             <Grid.Row key={todo.todoId}>
@@ -216,11 +288,14 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                   checked={todo.done}
                 />
               </Grid.Column>
-              <Grid.Column width={10} verticalAlign="middle">
+              <Grid.Column width={8} verticalAlign="middle">
                 {todo.name}
               </Grid.Column>
-              <Grid.Column width={3} floated="right">
+              <Grid.Column width={2} floated="right">
                 {todo.dueDate}
+              </Grid.Column>
+              <Grid.Column width={2} floated="right">
+                {dateFormat(new Date(Date.parse(todo.createdAt)), 'yyyy-mm-dd') as string}
               </Grid.Column>
               <Grid.Column width={1} floated="right">
                 <Button
