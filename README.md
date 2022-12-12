@@ -101,6 +101,10 @@ It should return a new TODO item that looks like this:
   }
 }
 ```
+Update from project 4:
+-Add Exprire Time field for user can choose dueDate (not default 7)
+-Add File field for user can choose image for TODO
+```
 
 * `UpdateTodo` - should update a TODO item created by a current user. A shape of data send by a client application to this function can be found in the `UpdateTodoRequest.ts` file
 
