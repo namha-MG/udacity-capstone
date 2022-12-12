@@ -56,8 +56,8 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ newTodoName: event.target.value })
   }
-  handleIndexChange = async (event: React.ChangeEvent<HTMLInputElement>, data: any) => {
-    console.log(event)
+  handleIndexChange = async (event: any, data: any) => {
+    console.log(data)
     this.setState({ indexName: data.value })
     this.setState({ selected: data.value })
     try {
