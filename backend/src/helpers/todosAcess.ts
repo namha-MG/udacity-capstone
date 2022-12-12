@@ -14,22 +14,28 @@ export class TodosAccess {
     constructor(
         private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
         private readonly todosTable = process.env.TODOS_TABLE,
-        private readonly todoCreatedIndex = process.env.TODOS_CREATED_AT_INDEX
+        private readonly todoCreatedIndex = process.env.TODOS_CREATED_AT_INDEX,
+        private readonly todoDueDateIndex = process.env.TODOS_DUEDATE_INDEX,
+        private readonly todoNameIndex = process.env.TODOS_NAME_INDEX
     ) { }
-    async getAllTodos(userId: string): Promise<TodoItem[]> {
+    async getAllTodos(userId: string, indexName: string): Promise<TodoItem[]> {
         logger.info('Start getting all todos')
 
+        let todoIndex = ''
+        if(indexName == "Name"){
+            todoIndex = this.todoNameIndex
+        }else if (indexName == "DueDate"){
+            todoIndex = this.todoDueDateIndex
+        }else{
+            todoIndex = this.todoCreatedIndex
+        }
+        logger.info('todoIndex: ' + todoIndex)
         const result = await this.docClient.query({
             TableName: this.todosTable,
-            IndexName: this.todoCreatedIndex,
+            IndexName: todoIndex,
             KeyConditionExpression: 'userId = :userId',
             ExpressionAttributeValues: {
                 ':userId': userId
-            }
-        }, (err) => {
-            if (err) {
-                logger.info('Failed to get todo items')
-                throw new Error("Failed to get todo items")
             }
         }).promise()
 
@@ -42,11 +48,6 @@ export class TodosAccess {
         await this.docClient.put({
             TableName: this.todosTable,
             Item: todoItem
-        }, (err) => {
-            if (err) {
-                logger.info('Failed to create todo item')
-                throw new Error("Failed to create todo item")
-            }
         }).promise()
 
         return todoItem

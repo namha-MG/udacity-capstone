@@ -43,9 +43,9 @@ export async function deleteTodo(todoId: string, userId: string) {
     await todoAccess.deleteTodoItem(todoId, userId)
 }
 // TODO: Get
-export async function getTodosForUser(userId: string): Promise<TodoItem[]> {
+export async function getTodosForUser(userId: string, indexName: string): Promise<TodoItem[]> {
     logger.info('Start get todo items')
-    return todoAccess.getAllTodos(userId)
+    return todoAccess.getAllTodos(userId, indexName)
 }
 // TODO: Create attachment url
 export async function createAttachmentPresignedUrl(todoId: string, userId: string): Promise<string> {

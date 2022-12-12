@@ -1,7 +1,7 @@
 # TODO: Change the name of the org 
 org: namha1
-app: serverless-namha1-capstone
-service: serverless-namha1-capstone
+app: serverless-namha1-caps-v4
+service: serverless-namha1-caps-v4
 
 plugins:
   - serverless-webpack
@@ -23,11 +23,13 @@ provider:
   # Use these variables in the functions and resouorces section below. For example, 
   # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
   environment:
-    TODOS_TABLE: serverless-namha1-capstone-${self:provider.stage}
+    TODOS_TABLE: serverless-namha1-caps-v4-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
-    ATTACHMENT_S3_BUCKET: serverless-namha1-capstone-images-${self:provider.stage}
+    TODOS_DUEDATE_INDEX: DueDateIndex
+    TODOS_NAME_INDEX: NameIndex
+    ATTACHMENT_S3_BUCKET: serverless-namha1-caps-v4-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
-    PROJECT_NAME: serverless-namha1-capstone
+    PROJECT_NAME: serverless-namha1-caps-v4
 
   logs:
     # Enable API Gateway logs
@@ -67,6 +69,14 @@ functions:
         Action:
           - dynamodb:Query
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_CREATED_AT_INDEX}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_NAME_INDEX}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_DUEDATE_INDEX}
       - Effect: Allow
         Action:
           - xray:PutTelemetryRecords
@@ -210,6 +220,10 @@ resources:
             AttributeType: S
           - AttributeName: createdAt
             AttributeType: S
+          - AttributeName: dueDate
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
@@ -223,6 +237,22 @@ resources:
               - AttributeName: userId
                 KeyType: HASH
               - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL # What attributes will be copied to an index
+          - IndexName: ${self:provider.environment.TODOS_DUEDATE_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: dueDate
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL # What attributes will be copied to an index
+          - IndexName: ${self:provider.environment.TODOS_NAME_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: name
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL # What attributes will be copied to an index
