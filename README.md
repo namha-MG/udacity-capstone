@@ -292,5 +292,6 @@ Provide variables for the collection (similarly to how this was done in the cour
 
 # GIT Repository
 
-udacity-prj4-namha1
+serverless-namha1-capstone
+
 

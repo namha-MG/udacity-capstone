@@ -1,7 +1,7 @@
 # TODO: Change the name of the org 
 org: namha1
-app: serverless-todo-app-namha1-capstone
-service: serverless-todo-app-namha1-capstone
+app: serverless-namha1-capstone
+service: serverless-namha1-capstone
 
 plugins:
   - serverless-webpack
@@ -23,11 +23,11 @@ provider:
   # Use these variables in the functions and resouorces section below. For example, 
   # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
   environment:
-    TODOS_TABLE: serverless-todo-app-namha1-capstone-${self:provider.stage}
+    TODOS_TABLE: serverless-namha1-capstone-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
-    ATTACHMENT_S3_BUCKET: serverless-todo-app-namha1-capstone-images-${self:provider.stage}
+    ATTACHMENT_S3_BUCKET: serverless-namha1-capstone-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
-    PROJECT_NAME: serverless-todo-app-namha1-capstone
+    PROJECT_NAME: serverless-namha1-capstone
 
   logs:
     # Enable API Gateway logs
