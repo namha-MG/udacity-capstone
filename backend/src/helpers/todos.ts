@@ -53,5 +53,6 @@ export async function createAttachmentPresignedUrl(todoId: string, userId: strin
     logger.info('userId: ' + userId)
     const url = attachment.getAttachmentUrl(todoId)
     await todoAccess.updateAttachmentUrl(todoId, userId, url)
-    return attachment.getUploadUrl(todoId)
+     attachment.getUploadUrl(todoId)
+     return url
 }
